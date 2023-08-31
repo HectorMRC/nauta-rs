@@ -1,3 +1,3 @@
-# nauta-rs
+# nauta
 
 A map generation tool.
