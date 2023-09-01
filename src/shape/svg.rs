@@ -1,12 +1,9 @@
 use std::f64::consts::{FRAC_PI_2, PI};
 
 use super::Shape;
-use crate::IntoSvg;
+use crate::{context::Context, IntoSvg};
 use globe_rs::GeographicPoint;
-use svg::node::{
-    element::{path::Data, Path},
-    Attributes,
-};
+use svg::node::element::{path::Data, Path};
 
 /// Given a point returns a tuple containing the x and y coordinates to be used in a svg.
 fn as_xy_tuple(point: GeographicPoint) -> (f64, f64) {
@@ -37,12 +34,12 @@ impl From<Shape> for Path {
 impl IntoSvg for Shape {
     type Output = Path;
 
-    fn into_svg(self, attributes: Attributes) -> Self::Output {
+    fn into_svg(self, ctx: Context) -> Self::Output {
         const NAMES: [&str; 2] = ["stroke", "stroke-width"];
 
-        attributes
+        NAMES
             .into_iter()
-            .filter(|(name, _)| NAMES.contains(&name.as_str()))
+            .filter_map(|name| ctx.value(name).map(|value| (name, value)))
             .fold(self.into(), |path, (name, value)| path.set(name, value))
     }
 }
