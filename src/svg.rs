@@ -1,10 +1,9 @@
+use crate::{context::Context, Karta};
 use ::svg::{
     node::{element::Group, Attributes},
     Document, Node as SvgNode,
 };
 use std::f64::consts::PI;
-
-use crate::Karta;
 
 /// Represents any sort of object that can be converted into an [SvgNode].
 pub trait IntoSvg: Into<Self::Output>
@@ -13,15 +12,16 @@ where
 {
     type Output;
 
-    fn into_svg(self, attr: Attributes) -> Self::Output;
+    fn into_svg(self, ctx: Context) -> Self::Output;
 }
 
 impl<T: IntoSvg> From<Karta<T>> for Document {
     fn from(value: Karta<T>) -> Document {
         let scale = value.scale;
-        let mut attributes = Attributes::new();
-        attributes.insert("stroke".to_string(), "black".into());
-        attributes.insert("stroke-width".to_string(), (1. / scale).into());
+
+        let ctx = Context::default()
+            .with_value("stroke", "black".into())
+            .with_value("stroke-width", (1. / scale).to_string());
 
         let mut group = Group::new().set("transform", format!("scale({scale})"));
         group.append(value.root.into_traverse().reduce(|value, children| {
@@ -29,7 +29,7 @@ impl<T: IntoSvg> From<Karta<T>> for Document {
                 .into_iter()
                 .fold(Group::new(), |group, child| group.add(child));
 
-            let mut object = value.into_svg(attributes.clone());
+            let mut object = value.into_svg(ctx.clone());
             object.append(group);
 
             object

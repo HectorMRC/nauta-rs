@@ -4,6 +4,8 @@ pub use shape::*;
 mod svg;
 pub use svg::*;
 
+mod context;
+
 use ntree_rs::Node as TreeNode;
 
 /// Represents a hierarchical group of elements shaping a map.
