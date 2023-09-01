@@ -9,13 +9,13 @@ use svg::node::{
 };
 
 /// Given a point returns a tuple containing the x and y coordinates to be used in a svg.
-fn coordinates(point: GeographicPoint) -> (f64, f64) {
+fn as_xy_tuple(point: GeographicPoint) -> (f64, f64) {
     ((point.longitude() + PI), (FRAC_PI_2 - point.latitude()))
 }
 
 impl From<Shape> for Path {
     fn from(value: Shape) -> Path {
-        let mut points = value.points.into_iter().map(coordinates);
+        let mut points = value.points.into_iter().map(as_xy_tuple);
 
         let mut data = Data::new();
         if let Some(position) = points.next() {
