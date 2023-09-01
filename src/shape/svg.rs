@@ -3,20 +3,19 @@ use std::f64::consts::{FRAC_PI_2, PI};
 use super::Shape;
 use crate::IntoSvg;
 use globe_rs::GeographicPoint;
-use svg::node::element::{path::Data, Path};
+use svg::node::{
+    element::{path::Data, Path},
+    Attributes,
+};
 
 /// Given a point returns a tuple containing the x and y coordinates to be used in a svg.
 fn coordinates(point: GeographicPoint) -> (f64, f64) {
     ((point.longitude() + PI), (FRAC_PI_2 - point.latitude()))
 }
 
-impl Into<Path> for Shape {
-    fn into(self) -> Path {
-        let mut points = self
-            .points
-            .into_iter()
-            .map(GeographicPoint::from)
-            .map(coordinates);
+impl From<Shape> for Path {
+    fn from(value: Shape) -> Path {
+        let mut points = value.points.into_iter().map(coordinates);
 
         let mut data = Data::new();
         if let Some(position) = points.next() {
@@ -27,29 +26,34 @@ impl Into<Path> for Shape {
             data = data.line_to(position);
         }
 
-        if self.closed {
+        if value.closed {
             data = data.close();
         }
 
-        Path::new()
-            .set("fill", "none")
-            .set("stroke", "black")
-            .set("stroke-width", 1)
-            .set("d", data)
+        Path::new().set("d", data)
     }
 }
 
 impl IntoSvg for Shape {
     type Output = Path;
+
+    fn into_svg(self, attributes: Attributes) -> Self::Output {
+        const NAMES: [&str; 2] = ["stroke", "stroke-width"];
+
+        attributes
+            .into_iter()
+            .filter(|(name, _)| NAMES.contains(&name.as_str()))
+            .fold(self.into(), |path, (name, value)| path.set(name, value))
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::Shape;
-    use globe_rs::CartesianPoint;
-    use svg::node::element::Path;
+    use std::f64::consts::{FRAC_PI_2, PI};
 
-   
+    use crate::Shape;
+    use globe_rs::GeographicPoint;
+    use svg::node::element::Path;
 
     #[test]
     fn svg_path_from_shape() {
@@ -60,24 +64,25 @@ mod test {
         }
 
         vec![
-            TestCase{
+            TestCase {
                 name: "meridian zero",
                 shape: Shape::from(vec![
-                    CartesianPoint::new(0., 0., 1.),
-                    CartesianPoint::new(0., 0., -1.),
+                    GeographicPoint::default().with_latitude(FRAC_PI_2),
+                    GeographicPoint::default().with_latitude(-FRAC_PI_2),
                 ]),
-                output: "<path d=\"M3.1415927,0 L3.1415927,3.1415927\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>"
+                output: "<path d=\"M3.1415927,0 L3.1415927,3.1415927\"/>",
             },
-            TestCase{
+            TestCase {
                 name: "equatorial line",
                 shape: Shape::from(vec![
-                    CartesianPoint::new(-1., 0., 0.),
-                    CartesianPoint::new(-0.9, 0.001445, 0.),
+                    GeographicPoint::default().with_longitude(-PI).into(),
+                    GeographicPoint::default().with_longitude(PI).into(),
                 ]),
-                output: "<path d=\"M0,1.5707964 L6.2815927,1.5707964\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>"
-            }
-            
-        ].into_iter().for_each(|test_case| {
+                output: "<path d=\"M0,1.5707964 L6.2831855,1.5707964\"/>",
+            },
+        ]
+        .into_iter()
+        .for_each(|test_case| {
             let path: Path = test_case.shape.into();
             assert_eq!(path.to_string(), test_case.output, "{}", test_case.name);
         });

@@ -10,7 +10,7 @@ repository = "http://github.com/HectorMRC/nauta-rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-globe-rs = "0.1.5"
+globe-rs = "0.1.8"
 ntree-rs = "0.1.4"
 ntree-macros = "0.1.3"
 svg = "0.13.1"
