@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT"
 description = "A map generation tool."
 readme = "./README.md"
-repository = "http://github.com/HectorMRC/nauta-rs"
+repository = "https://github.com/HectorMRC/nauta-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
